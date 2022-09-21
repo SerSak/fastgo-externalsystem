@@ -6,8 +6,7 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
-
-<flow name="travelontip-externalsystemFlow" doc:id="7de17dc9-1c30-4c76-9691-b0fd8b0433c3" >
+	<flow name="travelontip-externalsystemFlow" doc:id="7de17dc9-1c30-4c76-9691-b0fd8b0433c3" >
 		<http:listener doc:name="Listener" doc:id="a4b13d92-9707-435d-a60b-7db47eca8f4a" config-ref="HTTP_Listener_config" path="${http.listener.path}">
 			<http:error-response statusCode="#[vars.statusCode as Number]" >
 				<http:body ><![CDATA[#[vars.errorMessage default "Critical Error"]]]></http:body>
