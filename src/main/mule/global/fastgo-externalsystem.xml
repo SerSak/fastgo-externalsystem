@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+
+<flow name="travelontip-externalsystemFlow" doc:id="7de17dc9-1c30-4c76-9691-b0fd8b0433c3" >
+		<http:listener doc:name="Listener" doc:id="a4b13d92-9707-435d-a60b-7db47eca8f4a" config-ref="HTTP_Listener_config" path="${http.listener.path}">
+			<http:error-response statusCode="#[vars.statusCode as Number]" >
+				<http:body ><![CDATA[#[vars.errorMessage default "Critical Error"]]]></http:body>
+			</http:error-response>
+		</http:listener>
+		<ee:transform doc:name="serviceType" doc:id="02b7377d-76d6-4d2b-b984-c56dda0ba4a5">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="serviceType"><![CDATA[%dw 2.0
+output application/java
+---
+attributes.uriParams.serviceType]]></ee:set-variable>
+				<ee:set-variable variableName="transactionId" ><![CDATA[%dw 2.0
+output application/java
+---
+attributes.headers.transactionId]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="f3cde37d-b9c7-4691-8044-aee33fcda02c" message="Request Recieved for FastGo External System for TransactionId: #[vars.transactionId]"/>
+		<choice doc:name="Choice" doc:id="4c46991b-2b19-414f-83cb-77b091fc4c1e" >
+			<when expression='#[vars.serviceType == "routes"]'>
+				<logger level="INFO" doc:name="Logger" doc:id="ec34a27a-d3cb-4b51-a7ba-02c27e66fe04" message="Routes Flow Called for FastGo External System for TransactionId: #[vars.transactionId]"/>
+				<flow-ref doc:name="Flow Reference" doc:id="051f9d6f-beef-4d87-80db-a83638c69e8e" name="FastGo-GetRoutes-implementationSub_Flow"/>
+			
+</when>
+			<when expression='#[vars.serviceType == "schedules"]'>
+				<logger level="INFO" doc:name="Logger" doc:id="5ecf9cf4-89af-4a5e-94eb-fef4b32af801" message="Schedules Flow Called for FastGo External System for TransactionId: #[vars.transactionId]"/>
+				<flow-ref doc:name="Flow Reference" doc:id="1fd6115a-6c7e-4b09-b4e6-d3c0fcff885c" name="FastGo-GetSchedules-implementationSub_Flow"/>
+			
+</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Logger" doc:id="37b2e67a-e62b-4440-adba-e441900d81f1" message="URI Parameter is not correct for FastGo External System for TransactionId: #[vars.transactionId]"/>
+			</otherwise>
+		</choice>
+		<logger level="INFO" doc:name="Logger" doc:id="6b125d48-a1cf-467a-8e5c-2835d841eb42" message="Response Sent for FastGo External System for TransactionId: #[vars.transactionId]"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="fd882ced-d205-4414-a255-64bae71d4bde" >
+				<logger level="INFO" doc:name="Logger" doc:id="7bd41162-4b3d-418a-8e62-2f52a16613bb" message="Error Occured for FastGo External System for TransactionId: #[vars.transactionId] reason: #[error.errorMessage] error type: #[error.errorType]"/>
+				<ee:transform doc:name="Transform Message" doc:id="e39a0701-08ba-4e76-850a-935dc9082ee7" >
+					<ee:message >
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="statusCode" ><![CDATA[%dw 2.0
+output application/json
+---
+500]]></ee:set-variable>
+						<ee:set-variable variableName="errorMessage" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"Error Message": "Error in FastGo System"
+}]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>
